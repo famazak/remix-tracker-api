@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Generic, Optional, TypeVar
 
 from pydantic import BaseModel
-from sqlalchemy import DateTime, func
+from sqlalchemy import DateTime, UniqueConstraint, func
 from sqlmodel import Column, Field, SQLModel
 
 DataT = TypeVar("DataT")
@@ -15,6 +15,8 @@ class Response(BaseModel, Generic[DataT]):
 
 
 class TrackBronzeBase(SQLModel):
+    __table_args__ = (UniqueConstraint("character_name", "realm_name"),)
+
     character_name: str = Field(max_length=32)
     realm_name: str = Field(max_length=32)
     bronze_total: int
