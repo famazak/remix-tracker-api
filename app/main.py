@@ -5,9 +5,11 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.crud import track_bronze
 from app.db import DatabaseErrorType, get_session
+from app.middleware import UnhandledExceptionMiddleware
 from app.models import Response, TrackBronzeCreate
 
 app = FastAPI()
+app.add_middleware(UnhandledExceptionMiddleware)
 
 
 @app.post(
