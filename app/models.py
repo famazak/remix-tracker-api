@@ -1,8 +1,17 @@
 from datetime import datetime
-from typing import Optional
+from typing import Generic, Optional, TypeVar
 
+from pydantic import BaseModel
 from sqlalchemy import DateTime, func
 from sqlmodel import Column, Field, SQLModel
+
+DataT = TypeVar("DataT")
+
+
+class Response(BaseModel, Generic[DataT]):
+    success: bool
+    message: Optional[str]
+    data: list[DataT] = Field(default_factory=list)
 
 
 class TrackBronzeBase(SQLModel):
