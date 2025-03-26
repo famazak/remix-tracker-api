@@ -1,13 +1,13 @@
-from typing import Optional
-
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.db import DatabaseError, DatabaseErrorType, DatabaseResult
 from app.models import TrackBronze, TrackBronzeCreate
 
 
 async def track_bronze(
     session: AsyncSession, data: TrackBronzeCreate
-) -> Optional[TrackBronzeCreate]:
+) -> DatabaseResult:
     try:
         track_data = TrackBronze(
             character_name=data.character_name,
@@ -17,7 +17,19 @@ async def track_bronze(
         session.add(track_data)
 
         await session.commit()
-        await session.refresh(track_data)
-        return data
-    except Exception:
-        return None
+        result = DatabaseResult(success=True, error=None, data=data)
+        return result
+    except IntegrityError:
+        await session.rollback()
+
+        error = DatabaseError(error_type=DatabaseErrorType.INTEGRITY_ERROR)
+        result = DatabaseResult(success=False, error=error, data=None)
+
+        return result
+    except SQLAlchemyError:
+        await session.rollback()
+
+        error = DatabaseError(error_type=DatabaseErrorType.SQLALCHEMY_ERROR)
+        result = DatabaseResult(success=False, error=error, data=None)
+
+        return result
