@@ -1,15 +1,17 @@
-from fastapi import Depends, FastAPI, status
+from fastapi import Depends, FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.crud import track_bronze
-from app.db import DatabaseErrorType, get_session
+from app.db import get_session
 from app.middleware import UnhandledExceptionMiddleware
 from app.models import (
     ClientErrorResponse,
     ServerErrorResponse,
     SuccessResponse,
+    TrackBronze,
     TrackBronzeCreate,
 )
 
@@ -17,11 +19,18 @@ app = FastAPI()
 app.add_middleware(UnhandledExceptionMiddleware)
 
 
+@app.exception_handler(SQLAlchemyError)
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
+    return JSONResponse(
+        status_code=500, content=jsonable_encoder(ServerErrorResponse())
+    )
+
+
 @app.post(
     "/track",
     responses={
         409: {"model": ClientErrorResponse},
-        201: {"model": SuccessResponse[TrackBronzeCreate]},
+        201: {"model": SuccessResponse[TrackBronze]},
         500: {"model": ServerErrorResponse},
     },
 )
@@ -30,23 +39,17 @@ async def track(
 ):
     result = await track_bronze(session, track_bronze_data)
 
-    if not result.success and result.error is not None:
-        if result.error.error_type is DatabaseErrorType.INTEGRITY_ERROR:
-            client_error = ClientErrorResponse(
-                message="A character with this name and realm already exists"
-            )
-            return JSONResponse(
-                status_code=status.HTTP_409_CONFLICT,
-                content=jsonable_encoder(client_error),
-            )
-        elif result.error.error_type is DatabaseErrorType.SQLALCHEMY_ERROR:
-            server_error = ServerErrorResponse(message="An unexpected error occurred")
-            return JSONResponse(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content=jsonable_encoder(server_error),
-            )
+    if result is None:
+        client_error = ClientErrorResponse(
+            message="A character with this name and realm already exists"
+        )
 
-    success_response = SuccessResponse(data=[track_bronze_data])
-    return JSONResponse(
-        status_code=status.HTTP_201_CREATED, content=jsonable_encoder(success_response)
-    )
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT, content=jsonable_encoder(client_error)
+        )
+    else:
+        success_response = SuccessResponse(data=[result])
+        return JSONResponse(
+            status_code=status.HTTP_201_CREATED,
+            content=jsonable_encoder(success_response),
+        )

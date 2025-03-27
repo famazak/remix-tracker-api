@@ -17,7 +17,7 @@ class ClientErrorResponse(BaseApiResponse):
 
 
 class ServerErrorResponse(BaseApiResponse):
-    pass
+    message: Optional[str] = "An unexpected error occurred"
 
 
 class SuccessResponse(BaseApiResponse, Generic[DataT]):
