@@ -11,6 +11,7 @@ fastapi = {extras = ["standard"], version = "^0.115.12"}
 asyncpg = "^0.30.0"
 alembic = "^1.15.1"
 sqlmodel = "^0.0.24"
+pytest = "^8.3.5"
 
 
 [build-system]
