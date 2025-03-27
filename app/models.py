@@ -8,9 +8,19 @@ from sqlmodel import Column, Field, SQLModel
 DataT = TypeVar("DataT")
 
 
-class Response(BaseModel, Generic[DataT]):
-    success: bool
-    message: Optional[str]
+class BaseApiResponse(BaseModel):
+    message: Optional[str] = None
+
+
+class ClientErrorResponse(BaseApiResponse):
+    pass
+
+
+class ServerErrorResponse(BaseApiResponse):
+    pass
+
+
+class SuccessResponse(BaseApiResponse, Generic[DataT]):
     data: list[DataT] = Field(default_factory=list)
 
 
