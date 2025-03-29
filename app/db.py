@@ -26,7 +26,7 @@ async def get_session() -> AsyncSession:
 
 class DatabaseErrorType(str, Enum):
     INTEGRITY_ERROR = "IntegrityError"
-    SQLALCHEMY_ERROR = "SQLAlchemyError"
+    NOT_FOUND_ERROR = "NotFoundError"
 
 
 @dataclass

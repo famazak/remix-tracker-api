@@ -43,3 +43,7 @@ class TrackBronze(TrackBronzeBase, table=True):
 
 class TrackBronzeCreate(TrackBronzeBase):
     pass
+
+
+class TrackBronzeUpdate(TrackBronzeBase):
+    pass
